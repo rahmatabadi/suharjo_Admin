@@ -7,6 +7,7 @@ class Menu extends CI_Controller
     {
         parent::__construct();
         $this->load->model('Menu_model', 'menu');
+        is_logged_in();
     }
 
     public function index()
