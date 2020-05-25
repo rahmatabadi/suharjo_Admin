@@ -74,4 +74,46 @@ class User extends CI_Controller
             redirect('user');
         }
     }
+
+    public function changepassword()
+    {
+        $data['title'] = 'Change Password';
+        $data['user'] = $this->db->get_where('user', ['email' => $this->session->userdata('email')])->row_array();
+
+        $this->form_validation->set_rules('currentPassword', 'Current Password', 'required|trim');
+        $this->form_validation->set_rules('newPassword1', 'New Password', 'required|trim|min_length[3]|matches[newPassword2]');
+        $this->form_validation->set_rules('newPassword2', 'Confrim Password', 'required|trim|min_length[3]|matches[newPassword1]');
+
+
+
+
+        if ($this->form_validation->run() == false) {
+            $this->load->view('templates/header', $data);
+            $this->load->view('templates/sidebar', $data);
+            $this->load->view('templates/topbar', $data);
+            $this->load->view('user/changepassword', $data);
+            $this->load->view('templates/footer');
+        } else {
+            $currentPassword = $this->input->post('currentPassword');
+            $newPassword = $this->input->post('newPassword1');
+            if (!password_verify($currentPassword, $data['user']['password'])) {
+                $this->session->set_flashdata('message', '<div class="alert alert-danger" role="alert">Wrong Current Password! </div>');
+                redirect('user/changepassword');
+            } else {
+                if ($currentPassword == $newPassword) {
+                    $this->session->set_flashdata('message', '<div class="alert alert-danger" role="alert">New Password cannot be the same as current password! </div>');
+                    redirect('user/changepassword');
+                } else {
+                    $passwordHash = password_hash($newPassword, PASSWORD_DEFAULT);
+
+                    $this->db->set('password', $passwordHash);
+                    $this->db->where('email', $this->session->userdata('email'));
+                    $this->db->update('user');
+
+                    $this->session->set_flashdata('message', '<div class="alert alert-success" role="alert">Your Password is updated</div>');
+                    redirect('user/changepassword');
+                }
+            }
+        }
+    }
 }
